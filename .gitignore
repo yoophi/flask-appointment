@@ -37,3 +37,7 @@ nosetests.xml
 
 # DB
 sched.db
+
+# ...
+.ropeproject
+*.swp
