@@ -1,5 +1,6 @@
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
+from flask import render_template
 
 from sched.models import Base
 
@@ -11,5 +12,5 @@ db.Model = Base
 
 
 @app.route('/')
-def hello():
-    return 'Hello, world!'
+def index():
+    return render_template('index.html')
