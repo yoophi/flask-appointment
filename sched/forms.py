@@ -9,4 +9,4 @@ class AppointmentForm(Form):
     end = DateTimeField('Start', [required()])
     allday = BooleanField('All Day')
     location = TextField('Location', [Length(max=255)])
-    descriptin = TextAreaField('Description')
+    description = TextAreaField('Description')
