@@ -44,3 +44,15 @@ def appointment_detail(appointment_id):
     if appt is None:
         abort(404)
     return render_template('appointment/detail.html', appt=appt)
+
+
+@app.route('/appointments/<int:appointment_id>/edit')
+def appointment_edit(appointment_id):
+    """Provide HTML pgage with a given appointment."""
+    return 'appointment_edit()'
+
+
+@app.route('/appointments/<int:appointment_id>/delete')
+def appointment_delete(appointment_id):
+    """Provide HTML pgage with a given appointment."""
+    return 'appointment_delte()'

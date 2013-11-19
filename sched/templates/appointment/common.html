@@ -23,12 +23,23 @@
     <p><i class="icon-home"></i> {{ appt.location }}</p>
     {% endif %}
     {% if appt.allday %}
-    <p><i class="icon-calendar"></i> {{ appt.start | date }}</p>
+    <p><i class="icon-calendar"></i> {{ appt.start }}</p>
     {% else %}
-    <p><i class="icon-calendar"></i> {{ appt.start | datetime }} for {{ appt.duration | duration }} </p>
+    <p><i class="icon-calendar"></i> {{ appt.start }} for {{ appt.duration }} </p>
     {% endif %}
     {% if show_edit %}
-    show_edit
+    <div class="edit-controls">
+        <i class="icon-pencil"></i>
+        <a href="{{ url_for('appointment_edit', appointment_id=appt.id) }}">Edit</a>
+        <span class="inline-pad"></span>
+        <i class="appointment-delete-link"></i>
+        <a href="#" data-delete-url="{{ url_for('appointment_delete', appointment_id=appt.id) }}">Delete</a>
+    </div>
+    {% endif %}
+    {% if show_description and appt.description %}
+    <div class="row">
+        <p class="span5">{{ appt.description }}</p>
+    </div>
     {% endif %}
 </div>
 {% endmacro %}
