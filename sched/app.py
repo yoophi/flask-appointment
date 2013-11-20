@@ -3,6 +3,8 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask import render_template
 
 from sched.models import Base
+from sched import filters
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sched.db'
@@ -10,6 +12,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sched.db'
 db = SQLAlchemy(app)
 db.Model = Base
 
+filters.init_app(app)
 
 @app.route('/')
 def index():
@@ -77,3 +80,8 @@ def appointment_delete(appointment_id):
     db.session.delete(appt)
     db.session.commit()
     return jsonify({'status': 'OK'})
+
+
+@app.errorhandler(404)
+def error_not_found(error):
+    return render_template('error/not_found.html'), 404
