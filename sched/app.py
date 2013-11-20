@@ -1,9 +1,10 @@
 from flask import Flask
+from flask import abort, jsonify, redirect, render_template, request, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask import render_template
 
-from sched.models import Base
 from sched import filters
+from sched.forms import AppointmentForm
+from sched.models import Appointment, Base
 
 
 app = Flask(__name__)
@@ -14,27 +15,13 @@ db.Model = Base
 
 filters.init_app(app)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
 
-from flask import abort, jsonify, redirect
-from flask import request, url_for
-from sched.forms import AppointmentForm
-from sched.models import Appointment
 
-@app.route('/appointment/create/', methods=['GET', 'POST'])
-def appointment_create():
-    """Provide HTML form to create a new appointment."""
-    form = AppointmentForm(request.form)
-    if request.method == 'POST' and form.validate():
-        appt = Appointment()
-        form.populate_obj(appt)
-        db.session.add(appt)
-        db.session.commit()
-        # Success. Send user back to full appointment list.
-        return redirect(url_for('appointment_list'))
-    return render_template('appointment/edit.html', form=form)
+
+@app.errorhandler(404)
+def error_not_found(error):
+    return render_template('error/not_found.html'), 404
+
 
 @app.route('/appointments/')
 def appointment_list():
@@ -51,6 +38,21 @@ def appointment_detail(appointment_id):
     if appt is None:
         abort(404)
     return render_template('appointment/detail.html', appt=appt)
+
+
+@app.route('/appointment/create/', methods=['GET', 'POST'])
+def appointment_create():
+    """Provide HTML form to create a new appointment."""
+    form = AppointmentForm(request.form)
+    if request.method == 'POST' and form.validate():
+        appt = Appointment()
+        form.populate_obj(appt)
+        db.session.add(appt)
+        db.session.commit()
+        # Success. Send user back to full appointment list.
+        return redirect(url_for('appointment_list'))
+    return render_template('appointment/edit.html', form=form)
+
 
 
 @app.route('/appointments/<int:appointment_id>/edit/', methods=['GET', 'POST'])
@@ -82,6 +84,3 @@ def appointment_delete(appointment_id):
     return jsonify({'status': 'OK'})
 
 
-@app.errorhandler(404)
-def error_not_found(error):
-    return render_template('error/not_found.html'), 404
