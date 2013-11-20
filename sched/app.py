@@ -33,9 +33,13 @@ def appointment_create():
         return redirect(url_for('appointment_list'))
     return render_template('appointment/edit.html', form=form)
 
-@app.route('/appointment/list/', methods=['GET', 'POST'])
+@app.route('/appointments/')
 def appointment_list():
-    return 'appointment_list()'
+    """Provide HTML listing of all appointments."""
+    # Query: Get all Appointment objects, sorted by date
+    appts = (db.session.query(Appointment)).order_by(Appointment.start.asc()).all()
+    return render_template('appointment/index.html', appts=appts)
+
 
 @app.route('/appointments/<int:appointment_id>/')
 def appointment_detail(appointment_id):
@@ -46,10 +50,19 @@ def appointment_detail(appointment_id):
     return render_template('appointment/detail.html', appt=appt)
 
 
-@app.route('/appointments/<int:appointment_id>/edit')
+@app.route('/appointments/<int:appointment_id>/edit/', methods=['GET', 'POST'])
 def appointment_edit(appointment_id):
-    """Provide HTML pgage with a given appointment."""
-    return 'appointment_edit()'
+    """Provide HTML form to edit a given appointment."""
+    appt = db.session.query(Appointment).get(appointment_id)
+    if appt is None:
+        abort(404)
+    form = AppointmentForm(request.form, appt)
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(appt)
+        db.session.commit()
+        # Success. Send the user back to the detail view.
+        return redirect(url_for('appointment_detail', appointment_id=appt.id))
+    return render_template('appointment/edit.html', form=form)
 
 
 @app.route('/appointments/<int:appointment_id>/delete')

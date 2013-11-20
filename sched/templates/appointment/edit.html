@@ -2,7 +2,11 @@
 
 {% from 'appointment/common.html' import edit_field %}
 
-{% set title = 'Add Appintment' %}
+{% if request.endpoint.endswith('edit') %}
+    {% set title = 'Edit Appintment' %}
+{% else %}
+    {% set title = 'Add Appintment' %}
+{% endif %}
 
 {% block title %}{{ title }}{% endblock title %}
 
