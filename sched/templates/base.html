@@ -22,7 +22,21 @@
     </style>
     <script>
       $(function() {
-          {# ... #}
+          $(".appointment-delete-link").on("click", function() {
+              var delete_url = $(this).attr('data-delete-url');
+              $.ajax({
+                  url: delete_url,
+                  type: 'DELETE',
+                  success: function(response) {
+                      if (response.status == 'OK') {
+                          window.location = '{{ url_for('appointment_list') }}';
+                      } else {
+                        alert('Delete failed.');
+                      }
+                  }
+              });
+              return false;
+          });
       });
     </script>
     {% block extra_head %}{% endblock extra_head %}

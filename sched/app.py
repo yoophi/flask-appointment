@@ -65,7 +65,15 @@ def appointment_edit(appointment_id):
     return render_template('appointment/edit.html', form=form)
 
 
-@app.route('/appointments/<int:appointment_id>/delete')
+@app.route('/appointments/<int:appointment_id>/delete', methods=['DELETE'])
 def appointment_delete(appointment_id):
-    """Provide HTML pgage with a given appointment."""
-    return 'appointment_delte()'
+    """Delete record using HTTP DELETE, response with JSON"""
+    appt = db.session.query(Appointment).get(appointment_id)
+    if appt is None:
+        # Abort with Not Found, but with simple JSON response
+        response = jsonify({'status': 'Not Found'})
+        response.status = 404
+        return response
+    db.session.delete(appt)
+    db.session.commit()
+    return jsonify({'status': 'OK'})

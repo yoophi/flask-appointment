@@ -32,8 +32,8 @@
         <i class="icon-pencil"></i>
         <a href="{{ url_for('appointment_edit', appointment_id=appt.id) }}">Edit</a>
         <span class="inline-pad"></span>
-        <i class="appointment-delete-link"></i>
-        <a href="#" data-delete-url="{{ url_for('appointment_delete', appointment_id=appt.id) }}">Delete</a>
+        <i class="icon-trash"></i>
+        <a href="#" class="appointment-delete-link" data-delete-url="{{ url_for('appointment_delete', appointment_id=appt.id) }}">Delete</a>
     </div>
     {% endif %}
     {% if show_description and appt.description %}
