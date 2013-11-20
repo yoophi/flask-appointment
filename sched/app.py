@@ -40,7 +40,7 @@ def appointment_detail(appointment_id):
     return render_template('appointment/detail.html', appt=appt)
 
 
-@app.route('/appointment/create/', methods=['GET', 'POST'])
+@app.route('/appointments/create/', methods=['GET', 'POST'])
 def appointment_create():
     """Provide HTML form to create a new appointment."""
     form = AppointmentForm(request.form)
@@ -52,7 +52,6 @@ def appointment_create():
         # Success. Send user back to full appointment list.
         return redirect(url_for('appointment_list'))
     return render_template('appointment/edit.html', form=form)
-
 
 
 @app.route('/appointments/<int:appointment_id>/edit/', methods=['GET', 'POST'])
@@ -70,14 +69,14 @@ def appointment_edit(appointment_id):
     return render_template('appointment/edit.html', form=form)
 
 
-@app.route('/appointments/<int:appointment_id>/delete', methods=['DELETE'])
+@app.route('/appointments/<int:appointment_id>/delete/', methods=['DELETE'])
 def appointment_delete(appointment_id):
     """Delete record using HTTP DELETE, response with JSON"""
     appt = db.session.query(Appointment).get(appointment_id)
     if appt is None:
         # Abort with Not Found, but with simple JSON response
         response = jsonify({'status': 'Not Found'})
-        response.status = 404
+        response.status_code = 404
         return response
     db.session.delete(appt)
     db.session.commit()
