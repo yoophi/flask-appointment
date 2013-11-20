@@ -1,4 +1,5 @@
 Flask
+Flask-Login
 Flask-Script
 Flask-SQLAlchemy
 WTForms

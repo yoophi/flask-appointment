@@ -1,22 +1,54 @@
 from flask import Flask
 from flask import abort, jsonify, redirect, render_template, request, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.login import LoginManager, current_user
+from flask.ext.login import login_user, logout_user
 
 from sched import filters
-from sched.forms import AppointmentForm
+from sched.forms import AppointmentForm, LoginForm
 from sched.models import Appointment, Base
+from sched.models import User
 
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sched.db'
+app.config['SECRET_KEY'] = 'enydM2ANhdcoKwdVa0jWvEsbPFuQpMjf'
 
 db = SQLAlchemy(app)
 db.Model = Base
 
 filters.init_app(app)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.query(User).get(user_id)
 
 
+@app.route('/login/', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated():
+        return redirect(url_for('appointment_list'))
+    form = LoginForm(request.form)
+    error = None
+    if request.method == 'POST' and form.validate():
+        email = form.username.data.lower().strip()
+        password = form.password.data.lower().strip()
+        user, authenticated = User.authenticate(db.session.query, email, password)
+        if authenticated:
+            login_user(user)
+            return redirect(url_for('appointment_list'))
+        else:
+            error = 'Incorrect username or password.'
+    return render_template('user/login.html', form=form, error=error)
+
+@app.route('/logout/')
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 @app.errorhandler(404)
 def error_not_found(error):
