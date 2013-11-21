@@ -42,6 +42,7 @@ def error_not_found(error):
 
 
 @app.route('/appointments/')
+@login_required
 def appointment_list():
     """Provide HTML page listing all appointments in the database."""
     # Query: Get all Appointment objects, sorted by the appointment date.
@@ -52,21 +53,24 @@ def appointment_list():
 
 
 @app.route('/appointments/<int:appointment_id>/')
+@login_required
 def appointment_detail(appointment_id):
     """Provide HTML page with all details on a given appointment."""
     # Query: get Appointment object by ID.
     appt = db.session.query(Appointment).get(appointment_id)
-    if appt is None:
+    if appt is None or appt.user_id != current_user.id:
+        # Abort with Not Found.
         abort(404)
     return render_template('appointment/detail.html', appt=appt)
 
 
 @app.route('/appointments/create/', methods=['GET', 'POST'])
+@login_required
 def appointment_create():
     """Provide HTML form to create a new appointment record."""
     form = AppointmentForm(request.form)
     if request.method == 'POST' and form.validate():
-        appt = Appointment()
+        appt = Appointment(user_id=current_user.id)
         form.populate_obj(appt)
         db.session.add(appt)
         db.session.commit()
@@ -77,11 +81,14 @@ def appointment_create():
 
 
 @app.route('/appointments/<int:appointment_id>/edit/', methods=['GET', 'POST'])
+@login_required
 def appointment_edit(appointment_id):
     """Provide HTML form to edit a given appointment."""
     appt = db.session.query(Appointment).get(appointment_id)
     if appt is None:
         abort(404)
+    if appt.user_id != current_user.id:
+        abort(403)
     form = AppointmentForm(request.form, appt)
     if request.method == 'POST' and form.validate():
         form.populate_obj(appt)
@@ -92,6 +99,7 @@ def appointment_edit(appointment_id):
 
 
 @app.route('/appointments/<int:appointment_id>/delete/', methods=['DELETE'])
+@login_required
 def appointment_delete(appointment_id):
     """Delete a record using HTTP DELETE, respond with JSON for JavaScript."""
     appt = db.session.query(Appointment).get(appointment_id)
@@ -99,6 +107,11 @@ def appointment_delete(appointment_id):
         # Abort with simple response indicating appointment not found.
         response = jsonify({'status': 'Not Found'})
         response.status_code = 404
+        return response
+    if appt.user_id != current_user.id:
+        # Abort with simple response indicating forbidden.
+        response = jsonify({'status': 'Forbidden'})
+        response.status_code = 403
         return response
     db.session.delete(appt)
     db.session.commit()
