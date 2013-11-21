@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
+
 {% from 'appointment/common.html' import detail %}
-{% block title %}{{ appt.title }}{% endblock %}
+
+{% block title %}{{ appt.title }} or '(untitled)'{% endblock title %}
+
 {% block main %}
 <div class="row">
     <div class="span12">

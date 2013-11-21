@@ -1,71 +1,60 @@
 from flask import Flask
 from flask import abort, jsonify, redirect, render_template, request, url_for
-from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
-from flask.ext.login import login_user, logout_user
+from flask.ext.login import login_user, login_required, logout_user
+from flask.ext.sqlalchemy import SQLAlchemy
 
 from sched import filters
 from sched.forms import AppointmentForm, LoginForm
-from sched.models import Appointment, Base
-from sched.models import User
+from sched.models import Appointment, Base, User
 
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sched.db'
 app.config['SECRET_KEY'] = 'enydM2ANhdcoKwdVa0jWvEsbPFuQpMjf'
 
+# Use Flask-SQLAlchemy for its engine and session configuration. Load the
+# extension, giving it the app object, and override its default Model class
+# with the pure SQLAlchemy declarative Base class.
 db = SQLAlchemy(app)
 db.Model = Base
 
-filters.init_app(app)
 
+# Use Flask-Login to track the current user in Flask's session.
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to see your appointments.'
+
 
 @login_manager.user_loader
 def load_user(user_id):
+    """Hook for Flask-Login to load a User instance from a user ID."""
     return db.session.query(User).get(user_id)
 
 
-@app.route('/login/', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated():
-        return redirect(url_for('appointment_list'))
-    form = LoginForm(request.form)
-    error = None
-    if request.method == 'POST' and form.validate():
-        email = form.username.data.lower().strip()
-        password = form.password.data.lower().strip()
-        user, authenticated = User.authenticate(db.session.query, email, password)
-        if authenticated:
-            login_user(user)
-            return redirect(url_for('appointment_list'))
-        else:
-            error = 'Incorrect username or password.'
-    return render_template('user/login.html', form=form, error=error)
-
-@app.route('/logout/')
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
+# Load custom Jinja filters from the `filters` module.
+filters.init_app(app)
 @app.errorhandler(404)
 def error_not_found(error):
+    """Render a custom template when responding with 404 Not Found."""
     return render_template('error/not_found.html'), 404
 
 
 @app.route('/appointments/')
 def appointment_list():
-    """Provide HTML listing of all appointments."""
-    # Query: Get all Appointment objects, sorted by date
-    appts = (db.session.query(Appointment)).order_by(Appointment.start.asc()).all()
+    """Provide HTML page listing all appointments in the database."""
+    # Query: Get all Appointment objects, sorted by the appointment date.
+    appts = (db.session.query(Appointment)
+             .filter_by(user_id=current_user.id)
+             .order_by(Appointment.start.asc()).all())
     return render_template('appointment/index.html', appts=appts)
 
 
 @app.route('/appointments/<int:appointment_id>/')
 def appointment_detail(appointment_id):
-    """Provide HTML pgage with a given appointment."""
+    """Provide HTML page with all details on a given appointment."""
+    # Query: get Appointment object by ID.
     appt = db.session.query(Appointment).get(appointment_id)
     if appt is None:
         abort(404)
@@ -74,15 +63,16 @@ def appointment_detail(appointment_id):
 
 @app.route('/appointments/create/', methods=['GET', 'POST'])
 def appointment_create():
-    """Provide HTML form to create a new appointment."""
+    """Provide HTML form to create a new appointment record."""
     form = AppointmentForm(request.form)
     if request.method == 'POST' and form.validate():
         appt = Appointment()
         form.populate_obj(appt)
         db.session.add(appt)
         db.session.commit()
-        # Success. Send user back to full appointment list.
+        # Success. Send the user back to the full appointment list.
         return redirect(url_for('appointment_list'))
+    # Either first load or validation error at this point.
     return render_template('appointment/edit.html', form=form)
 
 
@@ -96,17 +86,17 @@ def appointment_edit(appointment_id):
     if request.method == 'POST' and form.validate():
         form.populate_obj(appt)
         db.session.commit()
-        # Success. Send the user back to the detail view.
+        # Success. Send the user back to the detail view of that appointment.
         return redirect(url_for('appointment_detail', appointment_id=appt.id))
     return render_template('appointment/edit.html', form=form)
 
 
 @app.route('/appointments/<int:appointment_id>/delete/', methods=['DELETE'])
 def appointment_delete(appointment_id):
-    """Delete record using HTTP DELETE, response with JSON"""
+    """Delete a record using HTTP DELETE, respond with JSON for JavaScript."""
     appt = db.session.query(Appointment).get(appointment_id)
     if appt is None:
-        # Abort with Not Found, but with simple JSON response
+        # Abort with simple response indicating appointment not found.
         response = jsonify({'status': 'Not Found'})
         response.status_code = 404
         return response
@@ -115,3 +105,26 @@ def appointment_delete(appointment_id):
     return jsonify({'status': 'OK'})
 
 
+@app.route('/login/', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated():
+        return redirect(url_for('appointment_list'))
+    form = LoginForm(request.form)
+    error = None
+    if request.method == 'POST' and form.validate():
+        email = form.username.data.lower().strip()
+        password = form.password.data.lower().strip()
+        user, authenticated = \
+            User.authenticate(db.session.query, email, password)
+        if authenticated:
+            login_user(user)
+            return redirect(url_for('appointment_list'))
+        else:
+            error = 'Incorrect username or password. Try again.'
+    return render_template('user/login.html', form=form, error=error)
+
+
+@app.route('/logout/')
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
