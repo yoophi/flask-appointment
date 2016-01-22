@@ -8,7 +8,6 @@ from sched import filters
 from sched.forms import AppointmentForm, LoginForm
 from sched.models import Appointment, Base, User
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sched.db'
 app.config['SECRET_KEY'] = 'enydM2ANhdcoKwdVa0jWvEsbPFuQpMjf'
@@ -35,6 +34,8 @@ def load_user(user_id):
 
 # Load custom Jinja filters from the `filters` module.
 filters.init_app(app)
+
+
 @app.errorhandler(404)
 def error_not_found(error):
     """Render a custom template when responding with 404 Not Found."""

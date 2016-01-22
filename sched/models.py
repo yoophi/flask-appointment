@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship, synonym
 from sqlalchemy.ext.declarative import declarative_base
 from werkzeug import check_password_hash, generate_password_hash
 
-
 Base = declarative_base()
 
 
@@ -45,7 +44,7 @@ class User(Base):
     @classmethod
     def authenticate(cls, query, email, password):
         email = email.strip().lower()
-        user = query(cls).filter(cls.email==email).first()
+        user = query(cls).filter(cls.email == email).first()
         if user is None:
             return None, False
         if not user.active:
@@ -69,7 +68,6 @@ class User(Base):
 
 
 class Appointment(Base):
-
     """An appointment on the calendar."""
 
     __tablename__ = 'appointment'
@@ -151,4 +149,3 @@ if __name__ == '__main__':
         end=now + timedelta(days=5),
         allday=True))
     session.commit()
-
