@@ -1,8 +1,8 @@
 from flask import Flask
 from flask import abort, jsonify, redirect, render_template, request, url_for
-from flask.ext.login import LoginManager, current_user
-from flask.ext.login import login_user, login_required, logout_user
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, current_user
+from flask_login import login_user, login_required, logout_user
+from flask_sqlalchemy import SQLAlchemy
 
 from sched import filters
 from sched.forms import AppointmentForm, LoginForm
